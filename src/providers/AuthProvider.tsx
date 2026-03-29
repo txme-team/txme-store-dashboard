@@ -30,17 +30,17 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 function getPrivyEmail(privyUser: PrivyUser | null): string | null {
   if (!privyUser) return null;
 
-  const emailAccount = privyUser.linked_accounts?.find(
+  const emailAccount = privyUser.linkedAccounts?.find(
     (account) => account.type === "email"
   ) as any;
   if (emailAccount?.address) return emailAccount.address;
 
-  const googleAccount = privyUser.linked_accounts?.find(
+  const googleAccount = privyUser.linkedAccounts?.find(
     (account) => account.type === "google_oauth"
   ) as any;
   if (googleAccount?.email) return googleAccount.email;
 
-  const appleAccount = privyUser.linked_accounts?.find(
+  const appleAccount = privyUser.linkedAccounts?.find(
     (account) => account.type === "apple_oauth"
   ) as any;
   if (appleAccount?.email) return appleAccount.email;
