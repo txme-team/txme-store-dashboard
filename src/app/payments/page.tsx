@@ -3,11 +3,9 @@
 import { useStore } from "@/hooks/useStore";
 
 const statusMap: Record<string, { label: string; bg: string; text: string }> = {
-  PENDING: { label: "입금중", bg: "#FEF9C3", text: "#A16207" },
-  PAID: { label: "입금완료", bg: "#DCFCE7", text: "#15803D" },
-  REFUND_REQUESTED: { label: "환불요청", bg: "#FEE2E2", text: "#B91C1C" },
-  REFUNDED: { label: "환불완료", bg: "#E0E7FF", text: "#3730A3" },
-  CANCELLED: { label: "취소", bg: "#F3F4F6", text: "#6B7280" },
+  PENDING: { label: "대기중", bg: "#FEF9C3", text: "#A16207" },
+  COMPLETED: { label: "완료", bg: "#DCFCE7", text: "#15803D" },
+  FAILED: { label: "실패", bg: "#FEE2E2", text: "#B91C1C" },
 };
 
 function formatDate(dateStr: string): string {
@@ -47,33 +45,6 @@ export default function PaymentsPage() {
         }}
       >
         <h1 style={{ fontSize: 24, fontWeight: 700 }}>실시간 결제 내역</h1>
-        <div style={{ display: "flex", gap: 12 }}>
-          <button
-            style={{
-              fontSize: 14,
-              border: "1px solid #E5E7EB",
-              borderRadius: 8,
-              padding: "8px 16px",
-              background: "#fff",
-              cursor: "pointer",
-            }}
-          >
-            검색
-          </button>
-          <button
-            style={{
-              backgroundColor: "#5959FF",
-              color: "#fff",
-              fontSize: 14,
-              padding: "8px 16px",
-              borderRadius: 8,
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            csv 다운로드
-          </button>
-        </div>
       </div>
 
       <div
@@ -87,7 +58,7 @@ export default function PaymentsPage() {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid #E5E7EB" }}>
-              {["주문 ID", "고객", "상품", "금액", "상태", "일시"].map((h) => (
+              {["주문 ID", "고객 지갑", "금액", "수수료", "수령액", "상태", "일시"].map((h) => (
                 <th
                   key={h}
                   style={{
@@ -104,53 +75,72 @@ export default function PaymentsPage() {
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => {
-              const status = statusMap[order.status] || statusMap.PENDING;
-              return (
-                <tr
-                  key={order.id}
-                  style={{ borderBottom: "1px solid #E5E7EB" }}
+            {orders.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={7}
+                  style={{
+                    padding: "40px 24px",
+                    textAlign: "center",
+                    fontSize: 14,
+                    color: "#9CA3AF",
+                  }}
                 >
-                  <td style={{ padding: "16px 24px", fontSize: 14 }}>
-                    {order.order_number}
-                  </td>
-                  <td style={{ padding: "16px 24px" }}>
-                    <div style={{ fontSize: 14, fontFamily: "monospace" }}>
-                      {shortenWallet(order.customer_wallet)}
-                    </div>
-                  </td>
-                  <td style={{ padding: "16px 24px", fontSize: 14 }}>
-                    {order.product_name || "-"}
-                  </td>
-                  <td style={{ padding: "16px 24px", fontSize: 14 }}>
-                    {Number(order.amount).toFixed(2)} {order.token_type}
-                  </td>
-                  <td style={{ padding: "16px 24px" }}>
-                    <span
+                  아직 결제 내역이 없습니다
+                </td>
+              </tr>
+            ) : (
+              orders.map((order) => {
+                const status = statusMap[order.status] || statusMap.PENDING;
+                return (
+                  <tr
+                    key={order.id}
+                    style={{ borderBottom: "1px solid #E5E7EB" }}
+                  >
+                    <td style={{ padding: "16px 24px", fontSize: 13, fontFamily: "monospace" }}>
+                      {order.order_id}
+                    </td>
+                    <td style={{ padding: "16px 24px" }}>
+                      <div style={{ fontSize: 13, fontFamily: "monospace" }}>
+                        {shortenWallet(order.payer_address)}
+                      </div>
+                    </td>
+                    <td style={{ padding: "16px 24px", fontSize: 14 }}>
+                      {Number(order.amount).toFixed(2)} {order.token_type}
+                    </td>
+                    <td style={{ padding: "16px 24px", fontSize: 14, color: "#EF4444" }}>
+                      -{Number(order.fee_amount).toFixed(2)}
+                    </td>
+                    <td style={{ padding: "16px 24px", fontSize: 14, fontWeight: 500 }}>
+                      {Number(order.net_amount).toFixed(2)} {order.token_type}
+                    </td>
+                    <td style={{ padding: "16px 24px" }}>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          padding: "4px 10px",
+                          borderRadius: 20,
+                          fontWeight: 500,
+                          backgroundColor: status.bg,
+                          color: status.text,
+                        }}
+                      >
+                        {status.label}
+                      </span>
+                    </td>
+                    <td
                       style={{
-                        fontSize: 12,
-                        padding: "4px 10px",
-                        borderRadius: 20,
-                        fontWeight: 500,
-                        backgroundColor: status.bg,
-                        color: status.text,
+                        padding: "16px 24px",
+                        fontSize: 14,
+                        color: "#6B7280",
                       }}
                     >
-                      {status.label}
-                    </span>
-                  </td>
-                  <td
-                    style={{
-                      padding: "16px 24px",
-                      fontSize: 14,
-                      color: "#6B7280",
-                    }}
-                  >
-                    {formatDate(order.created_at)}
-                  </td>
-                </tr>
-              );
-            })}
+                      {formatDate(order.paid_at || order.created_at)}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>

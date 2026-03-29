@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Sidebar from "@/components/layout/Sidebar";
-import Header from "@/components/layout/Header";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "TXME Store Dashboard",
@@ -16,11 +15,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        <Sidebar />
-        <div style={{ marginLeft: 240, minHeight: "100vh" }}>
-          <Header />
-          <main style={{ padding: 24 }}>{children}</main>
-        </div>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

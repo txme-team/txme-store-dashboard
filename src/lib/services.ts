@@ -1,11 +1,12 @@
 import { supabase } from "./supabase";
-import type { Store, Order, DashboardSummary } from "@/types/database";
+import type { Store, QrPaymentOrder, DashboardSummary } from "@/types/database";
 
-// 스토어 조회 (나중에 인증된 사용자의 스토어만 가져오게 변경)
-export async function getStore(): Promise<Store | null> {
+// 스토어 조회 (인증된 사용자의 스토어)
+export async function getStore(ownerMemberUid: string): Promise<Store | null> {
   const { data, error } = await supabase
     .from("store")
     .select("*")
+    .eq("owner_member_uid", ownerMemberUid)
     .limit(1)
     .single();
 
@@ -16,10 +17,10 @@ export async function getStore(): Promise<Store | null> {
   return data;
 }
 
-// 주문 목록 조회
-export async function getOrders(storeId: string): Promise<Order[]> {
+// QR 결제 주문 목록 조회
+export async function getOrders(storeId: string): Promise<QrPaymentOrder[]> {
   const { data, error } = await supabase
-    .from("order")
+    .from("qr_payment_order")
     .select("*")
     .eq("store_id", storeId)
     .order("created_at", { ascending: false });
@@ -32,22 +33,17 @@ export async function getOrders(storeId: string): Promise<Order[]> {
 }
 
 // 대시보드 요약 계산
-export function calculateSummary(orders: Order[]): DashboardSummary {
-  const paidOrders = orders.filter((o) => o.status === "PAID");
-  const refundedOrders = orders.filter((o) => o.status === "REFUNDED");
+export function calculateSummary(orders: QrPaymentOrder[]): DashboardSummary {
+  const completedOrders = orders.filter((o) => o.status === "COMPLETED");
 
-  const totalSales = paidOrders.reduce((sum, o) => sum + Number(o.amount), 0);
-  const totalRefunds = refundedOrders.reduce((sum, o) => sum + Number(o.amount), 0);
-  const totalFees = paidOrders.reduce((sum, o) => sum + Number(o.fee_amount), 0);
-  const totalSettlement = paidOrders.reduce((sum, o) => sum + Number(o.net_amount), 0);
+  const totalSales = completedOrders.reduce((sum, o) => sum + Number(o.amount), 0);
+  const totalFees = completedOrders.reduce((sum, o) => sum + Number(o.fee_amount), 0);
+  const totalSettlement = completedOrders.reduce((sum, o) => sum + Number(o.net_amount), 0);
 
   return {
     totalSales,
-    totalRefunds,
     totalFees,
     totalSettlement,
-    salesCount: paidOrders.length,
-    refundCount: refundedOrders.length,
-    settlementCount: paidOrders.length,
+    salesCount: completedOrders.length,
   };
 }
