@@ -1,10 +1,25 @@
+"use client";
+
+import { useStore } from "@/hooks/useStore";
+
 export default function DashboardPage() {
+  const { summary, orders, loading } = useStore();
+
+  if (loading) {
+    return (
+      <div style={{ padding: 40, textAlign: "center", color: "#9CA3AF" }}>
+        로딩 중...
+      </div>
+    );
+  }
+
   return (
     <div>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
         대시보드
       </h1>
 
+      {/* Summary Cards */}
       <div
         style={{
           backgroundColor: "#fff",
@@ -22,44 +37,38 @@ export default function DashboardPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
+            gridTemplateColumns: "repeat(3, 1fr)",
             gap: 24,
           }}
         >
           <div>
             <p style={{ fontSize: 14, color: "#6B7280" }}>총 매출</p>
             <p style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>
-              $45,678.90
+              {summary.totalSales.toFixed(2)} USDC
             </p>
             <p style={{ fontSize: 14, color: "#9CA3AF", marginTop: 4 }}>
-              156건
+              {summary.salesCount}건
             </p>
-          </div>
-          <div>
-            <p style={{ fontSize: 14, color: "#6B7280" }}>총 환불</p>
-            <p style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>
-              $149.95
-            </p>
-            <p style={{ fontSize: 14, color: "#9CA3AF", marginTop: 4 }}>5건</p>
           </div>
           <div>
             <p style={{ fontSize: 14, color: "#6B7280" }}>총 수수료</p>
-            <p style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>
-              $1,234.56
+            <p style={{ fontSize: 24, fontWeight: 700, marginTop: 4, color: "#EF4444" }}>
+              -{summary.totalFees.toFixed(2)} USDC
             </p>
           </div>
           <div>
             <p style={{ fontSize: 14, color: "#6B7280" }}>총 정산</p>
-            <p style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>
-              $44,294.39
+            <p style={{ fontSize: 24, fontWeight: 700, marginTop: 4, color: "#10B981" }}>
+              {summary.totalSettlement.toFixed(2)} USDC
             </p>
             <p style={{ fontSize: 14, color: "#9CA3AF", marginTop: 4 }}>
-              151건
+              {summary.salesCount}건
             </p>
           </div>
         </div>
       </div>
 
+      {/* Recent Orders */}
       <div
         style={{
           backgroundColor: "#fff",
@@ -68,56 +77,55 @@ export default function DashboardPage() {
           padding: 24,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 16,
-          }}
+        <h2
+          style={{ fontSize: 14, fontWeight: 500, color: "#6B7280", marginBottom: 16 }}
         >
-          <h2 style={{ fontSize: 14, fontWeight: 500, color: "#6B7280" }}>
-            기간 별 상세 내역
-          </h2>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <select
-              style={{
-                fontSize: 14,
-                border: "1px solid #E5E7EB",
-                borderRadius: 8,
-                padding: "8px 12px",
-              }}
-            >
-              <option>일별</option>
-              <option>주별</option>
-              <option>월별</option>
-            </select>
-            <button
-              style={{
-                backgroundColor: "#5959FF",
-                color: "#fff",
-                fontSize: 14,
-                padding: "8px 16px",
-                borderRadius: 8,
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              csv 다운로드
-            </button>
+          최근 거래
+        </h2>
+        {orders.length === 0 ? (
+          <div
+            style={{
+              padding: 40,
+              textAlign: "center",
+              color: "#9CA3AF",
+              fontSize: 14,
+            }}
+          >
+            아직 거래 내역이 없습니다
           </div>
-        </div>
-        <div
-          style={{
-            height: 300,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#9CA3AF",
-          }}
-        >
-          차트 영역
-        </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {orders.slice(0, 5).map((order) => (
+              <div
+                key={order.id}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "12px 0",
+                  borderBottom: "1px solid #F3F4F6",
+                }}
+              >
+                <div>
+                  <p style={{ fontSize: 13, fontFamily: "monospace", color: "#374151" }}>
+                    {order.order_id}
+                  </p>
+                  <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
+                    {new Date(order.paid_at || order.created_at).toLocaleString("ko-KR")}
+                  </p>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <p style={{ fontSize: 15, fontWeight: 600, color: "#111827" }}>
+                    {Number(order.amount).toFixed(2)} USDC
+                  </p>
+                  <p style={{ fontSize: 12, color: "#10B981" }}>
+                    수령 {Number(order.net_amount).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
